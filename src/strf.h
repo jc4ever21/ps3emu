@@ -17,7 +17,7 @@ namespace strf {
 			const char*c_str() {
 				if (str_size==0 || str[str_size-1]) {
 					reserve(str_size+1);
-					str[str_size++] = 0;
+					str[str_size] = 0;
 				}
 				return str;
 			}
@@ -50,7 +50,7 @@ namespace strf {
 			const char*c_str() {
 				if (str_size==0 || str[str_size-1]) {
 					reserve(str_size+1);
-					str[str_size++] = 0;
+					str[str_size] = 0;
 				}
 				return str;
 			}
