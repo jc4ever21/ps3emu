@@ -39,6 +39,9 @@ namespace rsx {
 
 		gcm::init();
 
+		uint32_t data[0x800];
+		memset(data,0,sizeof(data));
+
 		int cnt = 0;
 		while (!atomic_read(&stop)) {
 			//win32_thread::yield();
@@ -110,7 +113,6 @@ namespace rsx {
 				uint32_t count = cmd>>18&0x7ff;
 				cmd &= 0x3FFFF;
 				uint32_t*in_data = &(uint32_t&)p[4];
-				uint32_t data[0x800];
 				dbgf("count %d\n",count);
 				for (int i=0;i<(int)count;i++) {
 					data[i] = se(in_data[i]);
@@ -118,6 +120,7 @@ namespace rsx {
 				}
 				ct[1] = se(get + count*4 + 4);
 				do_cmd(c,cmd,data,count);
+				memset(data,0,sizeof(uint32_t)*count);
 			}
 		}
 
