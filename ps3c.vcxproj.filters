@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{ddd573b0-d6eb-4ef2-8f6d-58a7b5f20f1c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ar.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\elf.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ld.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pe.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win32_coff_object_writer.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

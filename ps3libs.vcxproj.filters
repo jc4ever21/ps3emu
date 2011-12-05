@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{c1b68e80-679c-49a0-b848-7190f83ba609}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ah_audio.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ah_io.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ah_macros.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ah_main.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ah_register2_code.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ah_video.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\atomic.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cg_decompiler.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\errno.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\event.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\file.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gcm.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\helpers.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\interrupt.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\libname_id.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mem.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mem_mgr.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\misc.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mmio.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\process.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\prx.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rsx.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rsx_cmd.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shm.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\spu.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\strf.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sync.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sync_ns.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sysutil_daemon.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thread.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\time.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\timer.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win32_sync.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\win32_thread.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\config_ini.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\libs.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
