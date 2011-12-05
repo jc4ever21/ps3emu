@@ -37,11 +37,22 @@ struct rsx_context_t {
 	rsx_memory_handle mem;
 	sync::busy_lock busy_lock;
 	char*control,*info,*report;
-	void*addr;
-	uint32_t size;
 	uint32_t put,get;
 	win32_thread cmd_thread;
-	rsx_context_t() : addr(0), size(0), put(0), get(0) {}
+	struct iomapped_area {
+		uint32_t offset, size;
+		uint32_t real_addr;
+		iomapped_area() {}
+		iomapped_area(uint32_t offset,uint32_t size,uint32_t real_addr) : offset(offset), size(size), real_addr(real_addr) {}
+	};
+	std::map<uint32_t,iomapped_area,std::greater<uint32_t>> iomap;
+	rsx_context_t() : put(0), get(0) {}
+	uint32_t get_addr(uint32_t offset) {
+		auto i = iomap.lower_bound(offset);
+		if (i==iomap.end()) xcept("rsx no iomap for offset %#x",offset);
+		auto&m = i->second;
+		return m.real_addr + (offset-m.offset);
+	}
 };
 id_list_t<rsx_context_t> rsx_context_list;
 
@@ -93,14 +104,13 @@ int sys_rsx_context_allocate(uint32_t*context_id,uint64_t*control_addr,uint64_t*
 	return CELL_OK;
 }
 
-int sys_rsx_context_iomap(uint32_t context_id,uint32_t a2,uint32_t addr,uint32_t size) {
-	dbgf("rsx context iomap, id %d, %#x, addr %#x, size %#x\n",context_id,a2,addr,size);
+int sys_rsx_context_iomap(uint32_t context_id,uint32_t offset,uint32_t addr,uint32_t size) {
+	dbgf("rsx context iomap, id %d, offset %#x, addr %#x, size %#x\n",context_id,offset,addr,size);
 	auto h = rsx_context_list.get(context_id);
 	if (!h) return ESRCH;
 	rsx_context_t&c = *h;
 	c.busy_lock.lock();
-	c.addr = (void*)addr;
-	c.size = size;
+	c.iomap[offset] = rsx_context_t::iomapped_area(offset,size,addr);
 	c.busy_lock.unlock();
 	return CELL_OK;
 }

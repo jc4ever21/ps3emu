@@ -55,7 +55,7 @@ namespace rsx {
 					put = se(ct[0]);
 					get = se(ct[1]);
 					{
-						uint32_t at = (uint32_t)ctx->addr + get;
+						uint32_t at = ctx->get_addr(get);
 						auto i = flip_queue.find(at);
 						if (i!=flip_queue.end()) {
 							int id = i->second;
@@ -71,8 +71,7 @@ namespace rsx {
 				dbgf("put %#x, get %#x\n",put,get);
 				dbgf("got command, %d bytes\n",put-get);
 
-				char*p = (char*)c.addr;
-				p += get;
+				char*p = (char*)c.get_addr(get);
 				uint32_t cmd = se((uint32_t&)p[0]);
 
 				enum {
@@ -126,12 +125,12 @@ namespace rsx {
 
 	void*get_location(int location,uint32_t offset) {
 		if (location==0) return &ctx->mem->mem[offset];
-		else return (void*)&((char*)ctx->addr)[offset];
+		else return (void*)ctx->get_addr(offset);
 	}
 	void*get_context_addr(uint32_t context,uint32_t offset) {
 		switch (context) {
 		case 0xfeed0000: return &ctx->mem->mem[offset];
-		case 0xfeed0001: return (void*)&((char*)ctx->addr)[offset];
+		case 0xfeed0001: return (void*)ctx->get_addr(offset);
 		default:
 			xcept("unknown context %#x\n",context);
 		}
@@ -165,7 +164,6 @@ namespace rsx {
 		case first+1*stride:++index; \
 		case first
 		int index=0;
-		char*addr = (char*)c.addr;
 		switch (cmd) {
 		case 0x100: // no op
 			break;
