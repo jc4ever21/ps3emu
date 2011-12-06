@@ -633,6 +633,7 @@ namespace lv {
 		sc(140,sys_event_port_connect_ipc);
 		sc(141,sys_timer_usleep);
 		sc(142,sys_timer_sleep);
+		sc(145,sys_time_get_current_time);
 		sc(147,sys_time_get_timebase_frequency);
 		sc(150,sys_raw_spu_create_interrupt_tag);
 		sc(151,sys_raw_spu_set_int_mask);

@@ -61,5 +61,14 @@ int64_t sys_time_get_system_time() {
 	return timebase()/(timebase_frequency/1000000);
 }
 
-
+int sys_time_get_current_time(uint64_t*sec,uint64_t*nsec) {
+	FILETIME ft;
+	GetSystemTimeAsFileTime(&ft);
+	uint64_t v = ft.dwLowDateTime | (uint64_t)ft.dwHighDateTime<<32;
+	v -= 116444736000000000;
+	v /= 10;
+	*sec = v/1000000;
+	*nsec = v%1000000;
+	return CELL_OK;
+}
 
