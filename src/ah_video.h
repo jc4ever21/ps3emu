@@ -78,8 +78,9 @@ namespace ah_video {
 	}
 	int32_t cellVideoOutGetResolution(uint32_t resolution,uint16_t*dst) {
 		uint16_t w,h;
-		w = 720;
-		h = 480;
+		auto&wnd = gcm::get_window();
+		w = wnd.width();
+		h = wnd.height();
 		dst[0] = se(w);
 		dst[1] = se(h);
 		return video_ok;
