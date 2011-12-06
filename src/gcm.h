@@ -155,7 +155,7 @@ namespace gcm {
 	struct display_buffer_info {
 		int offset,pitch,width,height;
 		uint32_t addr, size;
-		GLuint rb;
+		GLuint colorbuf, depthbuf;
 	};
 	display_buffer_info display_buffers[8];
 	std::map<int,display_buffer_info*> display_buffer_offset_map;
@@ -192,6 +192,7 @@ namespace gcm {
 	int frame_count=0;
 	DWORD last_frame_report = 0;
 
+	GLuint fbo;
 	display_buffer_info*cur_display_buffer = 0;
 	void flip(int id) {
 		if (cur_display_buffer) {
@@ -200,10 +201,10 @@ namespace gcm {
 				0,0,cur_display_buffer->width,cur_display_buffer->height,
 				0,0,cur_display_buffer->width,cur_display_buffer->height,
 				GL_COLOR_BUFFER_BIT,GL_NEAREST);
+			glBindFramebuffer(GL_FRAMEBUFFER,fbo);
 			check_gl_error("flip blit");
 		}
 		if (!SwapBuffers(dc)) xcept("SwapBuffers failed; error %d\n",GetLastError());
-		glFinish();
 		++frame_count;
 		DWORD now = timeGetTime();
 		if (now-last_frame_report>=1000) {
@@ -213,16 +214,18 @@ namespace gcm {
 		}
 	}
 
-	GLuint fbo;
 	void set_surface(uint32_t addr) {
 		display_buffer_info*i = display_buffer_offset_map[addr];
 		if (!i) xcept("no display buffer for address %#x!\n",addr);
 		cur_display_buffer = i;
 		dbgf("set surface %#x\n",addr);
-		if (!i->rb) {
-			glGenRenderbuffers(1,&i->rb);
-			glBindRenderbuffer(GL_RENDERBUFFER,i->rb);
+		if (!i->colorbuf) {
+			glGenRenderbuffers(1,&i->colorbuf);
+			glBindRenderbuffer(GL_RENDERBUFFER,i->colorbuf);
 			glRenderbufferStorage(GL_RENDERBUFFER,GL_RGBA,i->width,i->height);
+			glGenRenderbuffers(1,&i->depthbuf);
+			glBindRenderbuffer(GL_RENDERBUFFER,i->depthbuf);
+			glRenderbufferStorage(GL_RENDERBUFFER,GL_DEPTH24_STENCIL8,i->width,i->height);
 			check_gl_error("generate renderbuffer");
 		}
 		if (!fbo) {
@@ -230,7 +233,8 @@ namespace gcm {
 			check_gl_error("generate framebuffer");
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER,fbo);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_RENDERBUFFER,i->rb);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_RENDERBUFFER,i->colorbuf);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER,i->depthbuf);
 		check_gl_error("set_surface");
 	}
 
@@ -736,9 +740,9 @@ namespace gcm {
 			if (format==0x85) {
 
 				int internal_format = GL_RGBA;
-				int format = GL_RGBA;
+				int format = GL_BGRA;
 
-				glTexImage2D(target,0,internal_format,t.width,t.height,0,format,GL_UNSIGNED_BYTE,t.data);
+				glTexImage2D(target,0,internal_format,t.width,t.height,0,format,GL_UNSIGNED_INT_8_8_8_8,t.data);
 
 				//glTexParameteri(target,GL_TEXTURE_MIN_FILTER,t.filter_min);
 
