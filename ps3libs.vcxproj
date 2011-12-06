@@ -78,6 +78,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\abi.h" />
     <ClInclude Include="src\ah_audio.h" />
     <ClInclude Include="src\ah_io.h" />
     <ClInclude Include="src\ah_macros.h" />
