@@ -352,6 +352,7 @@ namespace lv {
 	const int max_thread_id = 0xfff;
 	std::pair<int,int> get_thread_id_and_priority();
 
+#include "abi.h"
 #include "mem_mgr.h"
 
 #include "errno.h"
@@ -550,10 +551,10 @@ namespace lv {
 		// update manager service
 		return ENOSYS;
 	}
-	std::function<void(uint64_t*)> syscall_list[1024];
+	std::function<void(abi::context)> syscall_list[1024];
 	void setup_syscalls() {
 		for (int i=0;i<1024;i++) {
-			syscall_list[i] = [i](uint64_t*context) {
+			syscall_list[i] = [i](abi::context context) {
 				xcept("unknown syscall %d",i);
 			};
 		}
@@ -735,7 +736,7 @@ namespace lv {
 	}
 
 	extern "C" EXPORT
-	void F_syscall(uint64_t n,uint64_t*context) {
+	void F_syscall(uint64_t n,abi::context context) {
 		dbgf("%02X syscall %d\n",get_thread_id(),n);
 		syscall_list[n](context);
 	}

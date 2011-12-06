@@ -2,20 +2,6 @@
 
 std::map<std::pair<std::string,uint32_t>,uint32_t> ah_map;
 
-namespace abi {
-	enum {
-		r_cr = 0, r_lr = 1, r_ctr = 2,
-		r_gpr = 3,
-		r_xer = 35,
-		r_fpr = 36,
-		r_fpscr= 68,
-		r_vr = 69,
-		r_vscr = 101,
-		r_vrsave = 102,
-		r_count = 103,
-	};
-}
-
 template<typename F,F*ptr> uint32_t ah_wrapfunc();
 struct ah_register2 {
 	const char*libname;
@@ -34,16 +20,16 @@ struct ah_register2 {
 	template<int n_i,int n_f,typename F,F*ptr>  struct func2;
 	template<typename T,int n,bool i> struct select;
 	template<typename T,int n> struct select<T,n,true> {
-		static T get(uint64_t*ctx) {
-			return (T)ctx[(abi::r_gpr+3+n-1)*2];
+		static T get(abi::context ctx) {
+			return (T)abi::rgr(ctx,3+n-1);
 		}
 	};
 	template<typename T,int n> struct select<T,n,false> {
-		static T get(uint64_t*ctx) {
-			return (T)(double&)ctx[(abi::r_fpr+1+n-101)*2];
+		static T get(abi::context ctx) {
+			return (T)abi::rfr(ctx,1+n-101);
 		}
 	};
-#define args uint64_t*ctx
+#define args abi::context ctx
 #define passargs ctx
 #define select(t,n,ctx) select<t,n,(n<100)>::get(ctx)
 #include "ah_register2_code.h"
@@ -58,24 +44,24 @@ struct ah_register2 {
 };
 
 template<typename fx,typename R> struct ah_wrapfunc_impl2 {
-	static uint64_t f(uint64_t*context) {
-		context[(abi::r_gpr+3)*2] = (uint64_t)fx::f(context);
-		return context[abi::r_lr*2];
+	static uint64_t f(abi::context context) {
+		abi::wgr(context,3,(uint64_t)fx::f(context));
+		return rr(context,abi::r_lr);
 	}
 };
 template<typename fx> struct ah_wrapfunc_impl2<fx,void> {
-	static uint64_t f(uint64_t*context) {
+	static uint64_t f(abi::context context) {
 		fx::f(context);
-		return context[abi::r_lr*2];
+		return rr(context,abi::r_lr);
 	}
 };
 template<typename F,F*ptr>
-uint64_t ah_wrapfunc_impl(uint64_t*context) {
+uint64_t ah_wrapfunc_impl(abi::context context) {
 	typedef ah_register2::func<F,ptr> fx;
 	return ah_wrapfunc_impl2<fx,fx::R>::f(context);
 }
 template<typename F,F*ptr>
-void ah_wrapfunc_impl_noret(uint64_t*context) {
+void ah_wrapfunc_impl_noret(abi::context context) {
 	typedef ah_register2::func<F,ptr> fx;
 	ah_wrapfunc_impl2<fx,fx::R>::f(context);
 }
