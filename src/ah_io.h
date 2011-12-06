@@ -161,6 +161,12 @@ namespace pad {
 				case 'V': ctrl = ctrl_r2; break;
 				case 'G': ctrl = ctrl_l3; break;
 				case 'B': ctrl = ctrl_r3; break;
+				case VK_DOWN: ctrl = ctrl_down; break;
+				case VK_UP: ctrl = ctrl_up; break;
+				case VK_LEFT: ctrl = ctrl_left; break;
+				case VK_RIGHT: ctrl = ctrl_right; break;
+				case VK_RETURN: ctrl = ctrl_start; break;
+				case VK_BACK: ctrl = ctrl_select; break;
 				}
 				if (ctrl==-1) return;
 				if (down) press(ctrl);
