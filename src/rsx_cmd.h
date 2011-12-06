@@ -58,7 +58,7 @@ namespace rsx {
 					put = se(ct[0]);
 					get = se(ct[1]);
 					{
-						uint32_t at = ctx->get_addr(get);
+						uint32_t at = ctx->get_system_addr(get);
 						auto i = flip_queue.find(at);
 						if (i!=flip_queue.end()) {
 							int id = i->second;
@@ -74,7 +74,7 @@ namespace rsx {
 				dbgf("put %#x, get %#x\n",put,get);
 				dbgf("got command, %d bytes\n",put-get);
 
-				char*p = (char*)c.get_addr(get);
+				char*p = (char*)c.get_system_addr(get);
 				uint32_t cmd = se((uint32_t&)p[0]);
 
 				enum {
@@ -127,13 +127,13 @@ namespace rsx {
 	}
 
 	void*get_location(int location,uint32_t offset) {
-		if (location==0) return &ctx->mem->mem[offset];
-		else return (void*)ctx->get_addr(offset);
+		if (location==0) return (void*)ctx->get_video_addr(offset);
+		else return (void*)ctx->get_system_addr(offset);
 	}
 	void*get_context_addr(uint32_t context,uint32_t offset) {
 		switch (context) {
-		case 0xfeed0000: return &ctx->mem->mem[offset];
-		case 0xfeed0001: return (void*)ctx->get_addr(offset);
+		case 0xfeed0000: return (void*)ctx->get_video_addr(offset);
+		case 0xfeed0001: return (void*)ctx->get_system_addr(offset);
 		default:
 			xcept("unknown context %#x\n",context);
 		}
@@ -260,7 +260,7 @@ namespace rsx {
 			dbgf("set surface format, color format %d, depth format %d, type %d, antialias %d, width %d, height %d, pitch a %u, offset a %u, offset z %u, offset b %u, pitch b %u\n",
 				surface_color_format,surface_depth_format,surface_type,surface_antialias,surface_width,surface_height,
 				surface_pitch_a,surface_offset_a,surface_offset_z,surface_offset_b,surface_pitch_b);
-			gcm::set_surface(surface_offset_a);
+			gcm::set_surface(c.get_video_addr(surface_offset_a));
 			break;
 		case 0x22c: // set surface pitch z
 			break;
@@ -635,6 +635,36 @@ namespace rsx {
 			break;
 		case 0x300: // set dither enable
 			gcm::set_dither_enable(data[0]);
+			break;
+		case 0x2184: // set context dma buffer in/out
+			static uint32_t context_dma_buffer_in;
+			static uint32_t context_dma_buffer_out;
+			context_dma_buffer_in = data[0];
+			context_dma_buffer_out = data[1];
+			break;
+		case 0x230c: // copy2d offset pitch line format notify
+			// This command can be used with count 1 or 8
+			static uint32_t copy2d_in_offset, copy2d_out_offset;
+			static uint32_t copy2d_in_pitch, copy2d_out_pitch;
+			static uint32_t copy2d_line_length, copy2d_line_count;
+			static uint32_t copy2d_in_format, copy2d_out_format;
+			static uint32_t copy2d_notify;
+			copy2d_in_offset = data[0];
+			if (count==8) {
+				copy2d_out_offset = data[1];
+				copy2d_in_pitch = data[2];
+				copy2d_out_pitch = data[3];
+				copy2d_line_length = data[4];
+				copy2d_line_count = data[5];
+				copy2d_in_format = data[6]&0xff;
+				copy2d_out_format = data[6]>>8;
+				copy2d_notify = data[7];
+				gcm::copy2d(get_context_addr(context_dma_buffer_in,copy2d_in_offset),get_context_addr(context_dma_buffer_out,copy2d_out_offset),
+					copy2d_in_pitch,copy2d_out_pitch,copy2d_line_length,copy2d_line_count,copy2d_in_format,copy2d_out_format);
+			}
+			break;
+		case 0x2310: // copy2d offset out
+			copy2d_out_offset = data[0];
 			break;
 		default:
 			if (first||true) outf("unknown rsx cmd %#x\n",cmd);

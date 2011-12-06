@@ -47,7 +47,10 @@ struct rsx_context_t {
 	};
 	std::map<uint32_t,iomapped_area,std::greater<uint32_t>> iomap;
 	rsx_context_t() : put(0), get(0) {}
-	uint32_t get_addr(uint32_t offset) {
+	uint32_t get_video_addr(uint32_t offset) {
+		return (uint32_t)&mem->mem[offset];
+	}
+	uint32_t get_system_addr(uint32_t offset) {
 		auto i = iomap.lower_bound(offset);
 		if (i==iomap.end()) xcept("rsx no iomap for offset %#x",offset);
 		auto&m = i->second;
@@ -141,7 +144,7 @@ int sys_rsx_context_attribute(uint32_t context_id,uint64_t a2,uint64_t a3,uint64
 			uint32_t width = a4>>32;
 			uint32_t height = a4&0xffffffff;
 			dbgf("set display buffer %d, offset %#x, pitch %u, width %u, height %u\n",buffer_id,offset,pitch,width,height);
-			gcm::set_display_buffer(buffer_id,offset,pitch,width,height);
+			gcm::set_display_buffer(buffer_id,c.get_video_addr(offset),pitch,width,height);
 		}
 		break;
 	case 0x300: // set tile info

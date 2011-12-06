@@ -53,7 +53,7 @@ namespace gcm {
 			c.hIconSm       = 0;
 			RegisterClassExA(&c);
 
-			hwnd = CreateWindowExA(WS_EX_APPWINDOW|WS_EX_WINDOWEDGE,c.lpszClassName,"title",WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,720,480,0,0,GetModuleHandleA(0),0);
+			hwnd = CreateWindowExA(WS_EX_APPWINDOW|WS_EX_WINDOWEDGE,c.lpszClassName,"title",WS_OVERLAPPEDWINDOW,CW_USEDEFAULT,CW_USEDEFAULT,width(),height(),0,0,GetModuleHandleA(0),0);
 			if (!hwnd) xcept("CreateWindow failed with error %d",GetLastError());
 			ShowWindow(hwnd,SW_SHOWDEFAULT);
 			UpdateWindow(hwnd);
@@ -154,19 +154,31 @@ namespace gcm {
 
 	struct display_buffer_info {
 		int offset,pitch,width,height;
-
+		uint32_t addr, size;
+		GLuint rb;
 	};
 	display_buffer_info display_buffers[8];
 	std::map<int,display_buffer_info*> display_buffer_offset_map;
 
-	void set_display_buffer(int id,int offset,int pitch,int width,int height) {
-// 		if (id>=8) xcept("bad display buffer id %d\n",id);
-// 		display_buffer_info&i = display_buffers[id];
-// 		i.offset = offset;
-// 		i.pitch = pitch;
-// 		i.width = width;
-// 		i.height = height;
-		
+	display_buffer_info*get_display_buffer_by_addr(uint32_t addr) {
+		for (int i=0;i<8;i++) {
+			auto&db = display_buffers[i];
+			if (addr>=db.addr && addr<db.addr+db.size) return &db;
+		}
+		return 0;
+	}
+
+	// This function can be called from any thread; do not call GL functions in it!
+	void set_display_buffer(int id,uint32_t addr,int pitch,int width,int height) {
+		dbgf("set_display_buffer %#x\n",addr);
+		if (id>=8) xcept("bad display buffer id %d\n",id);
+		display_buffer_info&i = display_buffers[id];
+		display_buffer_offset_map[addr] = &i;
+		i.addr = addr;
+		i.size = pitch*height;
+		i.pitch = pitch;
+		i.width = width;
+		i.height = height;
 	}
 
 	void check_gl_error(const char*str) {
@@ -180,7 +192,16 @@ namespace gcm {
 	int frame_count=0;
 	DWORD last_frame_report = 0;
 
+	display_buffer_info*cur_display_buffer = 0;
 	void flip(int id) {
+		if (cur_display_buffer) {
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
+			glBlitFramebuffer(
+				0,0,cur_display_buffer->width,cur_display_buffer->height,
+				0,0,cur_display_buffer->width,cur_display_buffer->height,
+				GL_COLOR_BUFFER_BIT,GL_NEAREST);
+			check_gl_error("flip blit");
+		}
 		if (!SwapBuffers(dc)) xcept("SwapBuffers failed; error %d\n",GetLastError());
 		glFinish();
 		++frame_count;
@@ -192,9 +213,25 @@ namespace gcm {
 		}
 	}
 
-	void set_surface(int offset) {
-// 		display_buffer_info*i = display_buffer_offset_map[offset];
-// 		if (!i) xcept("no display buffer for offset %d!\n",offset);
+	GLuint fbo;
+	void set_surface(uint32_t addr) {
+		display_buffer_info*i = display_buffer_offset_map[addr];
+		if (!i) xcept("no display buffer for address %#x!\n",addr);
+		cur_display_buffer = i;
+		dbgf("set surface %#x\n",addr);
+		if (!i->rb) {
+			glGenRenderbuffers(1,&i->rb);
+			glBindRenderbuffer(GL_RENDERBUFFER,i->rb);
+			glRenderbufferStorage(GL_RENDERBUFFER,GL_RGBA,i->width,i->height);
+			check_gl_error("generate renderbuffer");
+		}
+		if (!fbo) {
+			glGenFramebuffers(1,&fbo);
+			check_gl_error("generate framebuffer");
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER,fbo);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_RENDERBUFFER,i->rb);
+		check_gl_error("set_surface");
 	}
 
 	void set_surface_clip(int x,int y,int w,int h) {
@@ -842,6 +879,31 @@ namespace gcm {
 	void set_dither_enable(uint32_t enable) {
 		if (enable) glEnable(GL_DITHER);
 		else glDisable(GL_DITHER);
+	}
+
+	void copy2d(void*src,void*dst,uint32_t src_pitch,uint32_t dst_pitch,uint32_t line_length,uint32_t line_count,uint32_t src_format,uint32_t dst_format) {
+		dbgf("copy2d src %p, dst %p, src_pitch %u, dst_pitch %u, line_length %u, line_count %u, src_format %d, dst_format %d\n",src,dst,src_pitch,dst_pitch,line_length,line_count,src_format,dst_format);
+		if ((src_format|dst_format)==1) {
+			if (get_display_buffer_by_addr((uint32_t)src)) xcept("fixme: copy2d src display buffer");
+			auto db = get_display_buffer_by_addr((uint32_t)dst);
+			if (db) {
+				if ((uint32_t)dst!=db->addr || src_pitch!=dst_pitch || (line_length*line_count)!=db->width*db->height*4) xcept("fixme: don't use glDrawPixels!");
+
+				// FIXME: Do not use glDrawPixels for this! It is deprecated, and for good reason.
+				//        It would be better to load up a texture and draw a quad.
+ 				glRasterPos2f(-1.0f,1.0f);
+				glPixelZoom(1.0f,-1.0f);
+				glDrawPixels(db->width,db->height,GL_BGRA,GL_UNSIGNED_INT_8_8_8_8,src);
+				check_gl_error("glDrawPixels");
+
+			} else {
+				for (uint32_t i=0;i<line_count;i++) {
+					memcpy(dst,src,line_length);
+					(uint8_t*&)src += src_pitch;
+					(uint8_t*&)dst += dst_pitch;
+				}
+			}
+		} else xcept("unknown copy2d format");
 	}
 
 }
