@@ -114,6 +114,9 @@
     <ClInclude Include="src\abi.h">
       <Filter>Source files</Filter>
     </ClInclude>
+    <ClInclude Include="src\gamepads.h">
+      <Filter>Source files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\libs.cpp">

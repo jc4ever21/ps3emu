@@ -53,6 +53,8 @@ namespace pad {
 	static_assert(sizeof(pad_capabilities)==128,"sizeof(pad_capabilities)!=128");
 	
 	struct pad_driver {
+		int vendor_id, product_id;
+		pad_driver() : vendor_id(0), product_id(0) {}
 		virtual ~pad_driver() {}
 		virtual pad_capabilities get_capabilities() = 0;
 		virtual bool has_press() = 0;
@@ -202,9 +204,8 @@ namespace pad {
 	sync::busy_lock busy_lock;
 
 	int add_pad(pad_driver*driver) {
-		sync::busy_locker l(busy_lock);
 		int n = -1;
-		for (int i=0;i<sizeof(pads)/sizeof(pads[0]);i++) {
+		for (uint32_t i=0;i<max_pads;i++) {
 			if (!pads[i].connected) {n=i;break;}
 		}
 		if (n==-1) xcept("add_pad failed; too many pads connected");
@@ -217,22 +218,36 @@ namespace pad {
 		return n;
 	}
 
+	void remove_pad(int n) {
+		if ((uint32_t)n>=max_pads || !pads[n].connected) xcept("remove_pad %d; no such pad",n);
+		pads[n].reset();
+	}
+
 	pad*get_pad(uint32_t port) {
 		if (port>=max_pads) return 0;
 		return (pads[port].connected) ? &pads[port] : 0;
 	}
 
+	bool can_add_pad() {
+		return (uint32_t)connected_pads<max_pads;
+	}
+
+#include "gamepads.h"
+
+	void update_pads() {
+		update_gamepads();
+	}
+
 	int32_t cellPadInit(uint32_t max) {
 		dbgf("cellPadInit, max_pads %d\n",max);
-		{
-			sync::busy_locker l(busy_lock);
-			if (inited) return err_already_initialized;
-			if (max>sizeof(pads)/sizeof(pads[0])) return err_invalid_parameter;
-			max_pads = max;
-			inited = true;
-			connected_pads = 0;
-		}
-		add_pad(new pad_driver_keyboard());
+		sync::busy_locker l(busy_lock);
+		if (inited) return err_already_initialized;
+		if (max>sizeof(pads)/sizeof(pads[0])) return err_invalid_parameter;
+		max_pads = max;
+		inited = true;
+		connected_pads = 0;
+		update_pads();
+		if (connected_pads==0) add_pad(new pad_driver_keyboard());
 		return pad_ok;
 	}
 
@@ -266,14 +281,15 @@ namespace pad {
 	int32_t cellPadGetInfo(pad_info*info) {
 		sync::busy_locker l(busy_lock);
 		if (!inited) return err_uninitialized;
+		update_pads();
 		memset(info,0,sizeof(*info));
 		info->max_pads = se((uint32_t)max_pads);
 		info->cur_pads = se((uint32_t)connected_pads);
 		info->info = 0;
 		for (uint32_t i=0;i<max_pads;i++) {
 			info->status[i] = pads[i].connected ? 1 : 0;
-			info->vendor_id[i] = 0;
-			info->product_id[i] = 0;
+			info->vendor_id[i] = pads[i].driver ? se((uint16_t)pads[i].driver->vendor_id) : 0;
+			info->product_id[i] = pads[i].driver ? se((uint16_t)pads[i].driver->product_id) : 0;
 		}
 		return pad_ok;
 	}

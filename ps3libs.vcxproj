@@ -92,6 +92,7 @@
     <ClInclude Include="src\errno.h" />
     <ClInclude Include="src\event.h" />
     <ClInclude Include="src\file.h" />
+    <ClInclude Include="src\gamepads.h" />
     <ClInclude Include="src\gcm.h" />
     <ClInclude Include="src\helpers.h" />
     <ClInclude Include="src\interrupt.h" />
